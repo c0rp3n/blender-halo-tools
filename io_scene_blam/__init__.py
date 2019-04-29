@@ -34,7 +34,7 @@ bl_info = {
 	"tracker_url": "https://github.com/c0rp3n/blender-halo-tools/issues"
 }
 
-import bpy, os
+import bpy
 from bpy import ops
 from bpy.props import (
         BoolProperty,
@@ -45,13 +45,12 @@ from bpy.props import (
         EnumProperty,
         )
 
-#
-# Property Groups
-#
 from bpy.types import (
     Panel,
     PropertyGroup
     )
+
+from io_scene_blam import export_model
 
 # ------------------------------------------------------------
 # Menu's and panels:
@@ -71,6 +70,9 @@ class Blam_SceneProps(Panel):
         row = layout.row()
         row.prop(blam, "root_collection")
 
+        row = layout.row()
+        row.prop(blam, "instance_collection")
+
 class Blam_ObjectProps(Panel):
     bl_label = "Blam Properties"
     bl_idname = "blam_object_panel"
@@ -79,11 +81,20 @@ class Blam_ObjectProps(Panel):
     bl_context = "object"
     bl_options = {'DEFAULT_CLOSED'}
 
+    show_shader_flags: BoolProperty(
+        name="Shader Flags",
+        default=True,
+        description="Show shader flags."
+        )
+
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
 
-        flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=False)
+        box = layout.box()
+        box.label(text = "Shader Flags")
+
+        flow = box.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=False)
 
         obj = context.object
         blam = obj.blam
@@ -115,80 +126,96 @@ class Blam_ObjectProps(Panel):
         col = flow.column()
         col.prop(blam, "exact_portal")
 
+        row = box.row()
+        row.prop(blam, "custom_flags")
+
 # ------------------------------------------------------------
 # Properties groups:
 class Blam_ScenePropertiesGroup(PropertyGroup):
     root_collection : StringProperty(
-        name='Root',
-        default="frame",
-        description="The root collection for export."
+        name = 'Root',
+        default = "Frame",
+        description = "The root collection for export"
+        )
+    
+    instance_collection : StringProperty(
+        name = 'Instances',
+        default = "Assets",
+        description = "The instancer collection for export"
         )
 
 class Blam_ObjectPropertiesGroup(PropertyGroup):
     double_sided : BoolProperty(
-        name="Double sided",
-        default=False,
-        description="Toggles whether the current object is double sided."
+        name = "Double sided",
+        default = False,
+        description = "Toggles whether the current object is double sided"
         )
 
     allow_transparency : BoolProperty(
-        name="Allow transparency",
-        default=False,
-        description="Toggles whether the current object is allowed to be transparent."
+        name = "Allow transparency",
+        default = False,
+        description = "Toggles whether the current object is allowed to be transparent"
         )
 
     render_only : BoolProperty(
         name="Render only",
-        default=False,
-        description="Toggles whether the current object is render only."
+        default = False,
+        description = "Toggles whether the current object is render only"
         )
 
     large_collideable : BoolProperty(
-        name="Large collideable",
-        default=False,
-        description="Toggles whether the current object is a large collideable."
+        name = "Large collideable",
+        default = False,
+        description = "Toggles whether the current object is a large collideable"
         )
 
     fog_plane : BoolProperty(
-        name="Fog plane",
+        name = "Fog plane",
         default = False,
-        description="Toggles whether the current object is a fog plane."
+        description="Toggles whether the current object is a fog plane"
         )
 
     ladder : BoolProperty(
-        name="Ladder",
+        name = "Ladder",
         default = False,
-        description="Toggles whether the current object is a ladder."
+        description = "Toggles whether the current object is a ladder"
         )
 
     breakable : BoolProperty(
-        name="Breakable",
+        name = "Breakable",
         default = False,
-        description="Toggles whether the current object is a ladder."
+        description = "Toggles whether the current object is a ladder"
         )
 
     ai_defeaning : BoolProperty(
-        name="AI deafening",
+        name = "AI deafening",
         default = False,
-        description="Toggles whether the current object shall deafen ai."
+        description = "Toggles whether the current object shall deafen ai"
         )
     
     collision_only : BoolProperty(
-        name="Collision only",
+        name = "Collision only",
         default = False,
-        description="Toggles whether the current object shall only be collision."
+        description = "Toggles whether the current object shall only be collision"
         )
 
     exact_portal : BoolProperty(
-        name="Exact Portal",
+        name = "Exact Portal",
         default = False,
-        description="Toggles whether the current object is an exact portal."
+        description = "Toggles whether the current object is an exact portal"
+        )
+
+    custom_flags : StringProperty(
+        name = "Custom flag string",
+        default = "",
+        description = "Allows for a custom flag string, this will overite the boolean flags if not empty"
         )
 
 # ------------------------------------------------------------
 # Register:
 
 classes = (
+    export_model.Blam_ExportModel,
     Blam_ScenePropertiesGroup,
     Blam_ObjectPropertiesGroup,
     Blam_SceneProps,
@@ -200,6 +227,8 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
+    bpy.types.TOPBAR_MT_file_export.append(export_model.menu_func_export)
+
     bpy.types.Scene.blam = PointerProperty(type=Blam_ScenePropertiesGroup, name="Blam Properties", description="Blam Object properties")
     bpy.types.Object.blam = PointerProperty(type=Blam_ObjectPropertiesGroup, name="Blam Properties", description="Blam Object properties")
 
@@ -208,6 +237,8 @@ def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+
+    bpy.types.TOPBAR_MT_file_export.remove(export_model.menu_func_export)
 
     del bpy.types.Scene.blam
     del bpy.types.Object.blam
