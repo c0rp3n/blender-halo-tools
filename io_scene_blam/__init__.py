@@ -21,29 +21,29 @@
 # Blender Halo Tools - W.I.P.
 
 bl_info = {
-	"name": "Blender Halo Tools",
+    "name": "Blender Halo Tools",
     "description": "Exporter for Halo CE (JMS) and Halo 2 (ASS) files.",
-	"author": "Oliver \"c0rp3n\" Hitchcock",
-	"version": (0, 1, 0),
-	"blender": (2, 80, 0),
-	"category": "Import-Export",
-	"location": "File > Import/Export, Scene properties",
+    "author": "Oliver \"c0rp3n\" Hitchcock",
+    "version": (0, 1, 0),
+    "blender": (2, 80, 0),
+    "category": "Import-Export",
+    "location": "File > Import/Export, Scene properties",
     "warning": "unstable",
     "support": "COMMUNITY",
-	"wiki_url": "https://github.com/c0rp3n/blender-halo-tools/wiki",
-	"tracker_url": "https://github.com/c0rp3n/blender-halo-tools/issues"
+    "wiki_url": "https://github.com/c0rp3n/blender-halo-tools/wiki",
+    "tracker_url": "https://github.com/c0rp3n/blender-halo-tools/issues"
 }
 
 import bpy
 from bpy import ops
 from bpy.props import (
-        BoolProperty,
-        FloatProperty,
-        IntProperty,
-        StringProperty,
-        PointerProperty,
-        EnumProperty,
-        )
+    BoolProperty,
+    FloatProperty,
+    IntProperty,
+    StringProperty,
+    PointerProperty,
+    EnumProperty,
+    )
 
 from bpy.types import (
     Panel,

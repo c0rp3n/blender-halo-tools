@@ -21,13 +21,13 @@
 import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import (
-        BoolProperty,
-        FloatProperty,
-        IntProperty,
-        StringProperty,
-        PointerProperty,
-        EnumProperty,
-        )
+    BoolProperty,
+    FloatProperty,
+    IntProperty,
+    StringProperty,
+    PointerProperty,
+    EnumProperty,
+    )
 from bpy.types import Operator
 
 JMS_CONSTANT = 8200
