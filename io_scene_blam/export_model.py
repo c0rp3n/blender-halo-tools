@@ -58,14 +58,33 @@ class Blam_ExportModel(Operator, ExportHelper):
         ),
         default='h1',
         )
+    
+    use_mesh_modifiers: BoolProperty(
+        name="Apply Modifiers",
+        description="Apply modifiers",
+        default=True,
+        )
+    
+    use_triangles: BoolProperty(
+        name="Triangulate Faces",
+        description="Convert all faces to triangles",
+        default=False,
+        )
 
     def execute(self, context):
-        return write_jms_model(context, self.filepath)
+        return write_jms_model(
+            context,
+            self.filepath,
+            self.use_triangles,
+            self.use_mesh_modifiers
+            )
 
 def menu_func_export(self, context):
     self.layout.operator(Blam_ExportModel.bl_idname, text='Halo Model (.jms/.ass)')
 
-def write_jms_model(context, filepath):
+def write_jms_model(context, filepath,
+                    EXPORT_TRI=False,
+                    EXPORT_APPLY_MODIFIERS=True):
     root_collection = get_root_collection()
 
     # Get all objects and instanced objects
@@ -98,36 +117,42 @@ def write_jms_model(context, filepath):
             else:
                 material_indexs.append(materials.index(matname))
 
-        for poly in obj.data.polygons:
-            # Vertices
-            for i in poly.loop_indices:
-                vertices.append(
-                    '0\n' + # node 0 index
-                    '{0[0]:0.10f}\t{0[1]:0.10f}\t{0[2]:0.10f}\n'.format( # postion (x,y,z)
-                        obj.data.vertices[obj.data.loops[i].vertex_index].co
-                        ) +
-                    '{0:0.10f}\t{1:0.10f}\t{2:0.10f}\n'.format( # normal (i,j,k)
-                        obj.data.vertices[obj.data.loops[i].vertex_index].normal[0] + 0,
-                        obj.data.vertices[obj.data.loops[i].vertex_index].normal[1] + 0,
-                        obj.data.vertices[obj.data.loops[i].vertex_index].normal[2] + 0
-                        ) +
-                    '0\n' + # npde 1 index
-                    '1\n' + # node 1 weight
-                    '{0[0]:0.10f}\t{0[1]:0.10f}\t0\n'.format( # uvw texture coordinates
-                        obj.data.uv_layers.active.data[obj.data.loops[i].index].uv
-                        )
+        # Mesh changes
+        ## Apply modifiers
+        mesh = obj.to_mesh(context.depsgraph, EXPORT_APPLY_MODIFIERS)
+
+        ## Triangulate
+        if EXPORT_TRI:
+            # _must_ do this first since it re-allocs arrays
+            mesh_triangulate(mesh)
+
+        # Vertices
+        object_vertex_count = len(mesh.vertices)
+        for vertex in mesh.vertices:
+            vertices.append(
+                '0\n' +
+                '{0[0]:0.10f}\t{0[1]:0.10f}\t{0[2]:0.10f}\n'.format(vertex.co) +
+                '{0[0]:0.10f}\t{0[1]:0.10f}\t{0[2]:0.10f}\n'.format(vertex.normal) +
+                '0\n' + # npde 1 index
+                '1\n' + # node 1 weight
+                '{0[0]:0.10f}\t{0[1]:0.10f}\t0\n'.format(
+                    obj.data.uv_layers.active.data[vertex.index].uv
                     )
-                vertex_count += 1
-        
-            # Tri
+                )
+
+        # Triangles
+        for poly in mesh.polygons:
             triangles.append(
                 str(region_count) + '\n' + # region index
                 str(material_indexs[poly.material_index]) + '\n' + # material index
-                str(vertex_count - 2) + '\t' + str(vertex_count - 1) + '\t' + str(vertex_count) + '\n' # vertices indexs
+                str(poly.vertices[0] + vertex_count) + '\t' + 
+                str(poly.vertices[1] + vertex_count) + '\t' +
+                str(poly.vertices[2] + vertex_count) + '\n'
                 )
-            tri_count += 1
 
         region_count += 1
+        vertex_count += object_vertex_count
+        tri_count += len(mesh.polygons)
 
     # Start write
     file = open(filepath, 'w',)
@@ -267,3 +292,11 @@ def get_truncated_mat_name(matname, flags):
         return truncated_name
     else:
         return combined_name
+
+def mesh_triangulate(mesh):
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bmesh.ops.triangulate(bm, faces=bm.faces)
+    bm.to_mesh(mesh)
+    bm.free()
