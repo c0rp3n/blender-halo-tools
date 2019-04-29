@@ -136,8 +136,8 @@ def write_jms_model(context, filepath,
                     '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format(
                         mesh.vertices[mesh.loops[i].vertex_index].co
                         ) +
-                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format(
-                        mesh.vertices[mesh.loops[i].vertex_index].normal
+                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # vertex normal (is the face normal???)
+                        poly.normal
                         ) +
                     '0\n' + # npde 1 index
                     '1\n' + # node 1 weight
