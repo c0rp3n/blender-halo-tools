@@ -6,7 +6,7 @@ _This project is not yet feature complete or stable so current features and or t
 
 ## Features
 
-### Exporter
+### JMS Exporter
 Halo CE exporter comparison
 
 |                     | Blender Halo Tools | BlueStreak | Blitzkrieg | Chimp |
@@ -18,6 +18,19 @@ Halo CE exporter comparison
 | Biped Systems       | [ ]                | [-]        | [-]        | [-]   |
 | Multiple Regions    | [-]                | [ ]        | [-]        | [-]   |
 | Vertex Weights      | [ ]                | [-]        | [ ]        | [-]   |
+
+#### Usage
+Model layout:
+```
+- Frame
+    |-Terrain
+    |-Sky
+    |-.....
+    |-Sub Collection
+        |-more stuff here
+        |-....
+```
+The frame should be a collection called Frame though the name of this can be changed in your scene properties. All sub collection in frame will also be included.
 
 ## Credits
 * zekilk (cyboryxmen) - Original blender jms exporter.
