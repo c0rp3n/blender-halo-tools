@@ -19,6 +19,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+import bmesh
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import (
     BoolProperty,
@@ -126,32 +127,37 @@ def write_jms_model(context, filepath,
             # _must_ do this first since it re-allocs arrays
             mesh_triangulate(mesh)
 
-        # Vertices
-        object_vertex_count = len(mesh.vertices)
-        for vertex in mesh.vertices:
-            vertices.append(
-                '0\n' +
-                '{0[0]:0.10f}\t{0[1]:0.10f}\t{0[2]:0.10f}\n'.format(vertex.co) +
-                '{0[0]:0.10f}\t{0[1]:0.10f}\t{0[2]:0.10f}\n'.format(vertex.normal) +
-                '0\n' + # npde 1 index
-                '1\n' + # node 1 weight
-                '{0[0]:0.10f}\t{0[1]:0.10f}\t0\n'.format(
-                    obj.data.uv_layers.active.data[vertex.index].uv
-                    )
-                )
-
-        # Triangles
+        # Loop triangles
         for poly in mesh.polygons:
+            # Vertices
+            for i in poly.loop_indices:
+                vertices.append(
+                    '0\n' +
+                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format(
+                        mesh.vertices[mesh.loops[i].vertex_index].co
+                        ) +
+                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format(
+                        mesh.vertices[mesh.loops[i].vertex_index].normal
+                        ) +
+                    '0\n' + # npde 1 index
+                    '1\n' + # node 1 weight
+                    '{0[0]:0.6f}\t{0[1]:0.6f}\n'.format( # uv coordinates
+                        mesh.uv_layers.active.data[i].uv
+                        ) +
+                    '0\n' # smoothing group
+                    )
+
+            # Triangles
             triangles.append(
                 str(region_count) + '\n' + # region index
                 str(material_indexs[poly.material_index]) + '\n' + # material index
-                str(poly.vertices[0] + vertex_count) + '\t' + 
-                str(poly.vertices[1] + vertex_count) + '\t' +
-                str(poly.vertices[2] + vertex_count) + '\n'
+                str(vertex_count) + '\t' + 
+                str(vertex_count + 1) + '\t' +
+                str(vertex_count + 2) + '\n'
                 )
+            vertex_count += 3
 
         region_count += 1
-        vertex_count += object_vertex_count
         tri_count += len(mesh.polygons)
 
     # Start write
