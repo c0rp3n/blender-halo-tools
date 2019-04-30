@@ -30,6 +30,10 @@ from bpy.props import (
     EnumProperty,
     )
 from bpy.types import Operator
+from .utils import (
+    get_root_collection,
+    mesh_triangulate
+    )
 
 JMS_CONSTANT = 8200
 NODE_LIST_CHECKSUM = 3251
@@ -37,8 +41,8 @@ DEFAULT_TEXTURE_PATH = "<none>"
 
 # ------------------------------------------------------------
 # Menu's and panels:
-class Blam_ExportModel(Operator, ExportHelper):
-    bl_idname = "blam.export_model"  # important since its how bpy.ops.import_test.some_data is constructed
+class Blam_ExportJmsModel(Operator, ExportHelper):
+    bl_idname = "blam.export_jms_model"  # important since its how bpy.ops.import_test.some_data is constructed
     bl_label = "Export Halo model file"
     bl_options = {'PRESET'}
 
@@ -48,16 +52,6 @@ class Blam_ExportModel(Operator, ExportHelper):
         default="*.jms",
         options={'HIDDEN'},
         maxlen=255,  # Max internal buffer length, longer would be clamped.
-        )
-
-    game: EnumProperty(
-        name="Example Enum",
-        description="Choose between exporting a Halo CE .jms file or a Halo 2 .ass file",
-        items=(
-            ('h1', "Halo CE (.jms)", ""),
-            ('h2', "Halo 2 (.ass)", ""),
-        ),
-        default='h1',
         )
     
     use_mesh_modifiers: BoolProperty(
@@ -81,10 +75,10 @@ class Blam_ExportModel(Operator, ExportHelper):
             )
 
 def menu_func_export(self, context):
-    self.layout.operator(Blam_ExportModel.bl_idname, text='Halo Model (.jms/.ass)')
+    self.layout.operator(Blam_ExportJmsModel.bl_idname, text='Halo Model (.jms)')
 
 def write_jms_model(context, filepath,
-                    EXPORT_TRI=False,
+                    EXPORT_TRI=True,
                     EXPORT_APPLY_MODIFIERS=True):
     root_collection = get_root_collection()
 
@@ -107,7 +101,7 @@ def write_jms_model(context, filepath,
         regions.append(obj.data.name[:31])
 
         # Materials
-        flags = get_object_shader_flags(obj, "h1")
+        flags = get_object_shader_flags(obj)
         material_indexs = []
         for mat in obj.material_slots:
             matname = get_truncated_mat_name(mat.name, flags)
@@ -213,58 +207,12 @@ def write_jms_model(context, filepath,
 
     return {'FINISHED'}
 
-def write_ass_model(context, filepath):
-    root_collection = get_root_collection()
-    instancer_collection = get_instancer_collection()
-
-    objects = []
-    instanced_objects = []
-    materials = []
-
-    # Get all objects and instanced objects
-    for obj in root_collection.all_objects:
-        if obj.is_from_instancer:
-            instanced_objects.append(obj)
-        else:
-            objects.append(obj)
-
-    # Get all material names for each object
-    for obj in objects:
-        flags = get_object_shader_flags(obj, "h2")
-        for mat in obj.material_slots:
-            matname = get_truncated_mat_name(mat.name, flags)
-            if matname not in materials:
-                materials.append(matname)
-    for obj in instanced_objects:
-        flags = get_object_shader_flags(obj, "h2")
-        for mat in obj.material_slots:
-            matname = get_truncated_mat_name(mat.name, flags)
-            if matname not in materials:
-                materials.append(matname)
-
-    # Start write
-    file = open(filepath, 'w',)
-
-def get_root_collection():
-    try:
-        scene = bpy.context.scene
-        return bpy.data.collections[scene.blam.root_collection]
-    except:
-        print('Error: All geomotry must be parented too the collection \"' + bpy.context.blam.root_collection + '\".')
-
-def get_instancer_collection():
-    try:
-        return bpy.data.collections[bpy.context.scene.blam.instancer_collection]
-    except:
-        print('Error: All geomotry must be parented too the collection \"' + bpy.context.blam.root_collection + '\".')
-
-def get_object_shader_flags(obj, game):
+def get_object_shader_flags(obj):
     blam = obj.blam
     if blam.custom_flags != "":
         return blam.custom_flags
-    elif game == "h1":
+    else:
         flag_string = ""
-
         if blam.double_sided:
             flag_string += '%'
         if blam.allow_transparency:
@@ -287,8 +235,6 @@ def get_object_shader_flags(obj, game):
             flag_string += '.'
 
         return flag_string
-    else:
-        return ""
 
 def get_truncated_mat_name(matname, flags):
     combined_name = matname + flags
@@ -298,11 +244,3 @@ def get_truncated_mat_name(matname, flags):
         return truncated_name
     else:
         return combined_name
-
-def mesh_triangulate(mesh):
-    import bmesh
-    bm = bmesh.new()
-    bm.from_mesh(mesh)
-    bmesh.ops.triangulate(bm, faces=bm.faces)
-    bm.to_mesh(mesh)
-    bm.free()

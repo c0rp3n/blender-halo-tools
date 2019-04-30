@@ -50,7 +50,7 @@ from bpy.types import (
     PropertyGroup
     )
 
-from io_scene_blam import export_model
+from io_scene_blam import export_jms_model
 
 # ------------------------------------------------------------
 # Menu's and panels:
@@ -215,7 +215,7 @@ class Blam_ObjectPropertiesGroup(PropertyGroup):
 # Register:
 
 classes = (
-    export_model.Blam_ExportModel,
+    export_jms_model.Blam_ExportJmsModel,
     Blam_ScenePropertiesGroup,
     Blam_ObjectPropertiesGroup,
     Blam_SceneProps,
@@ -227,7 +227,7 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    bpy.types.TOPBAR_MT_file_export.append(export_model.menu_func_export)
+    bpy.types.TOPBAR_MT_file_export.append(export_jms_model.menu_func_export)
 
     bpy.types.Scene.blam = PointerProperty(type=Blam_ScenePropertiesGroup, name="Blam Properties", description="Blam Object properties")
     bpy.types.Object.blam = PointerProperty(type=Blam_ObjectPropertiesGroup, name="Blam Properties", description="Blam Object properties")
@@ -238,7 +238,7 @@ def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 
-    bpy.types.TOPBAR_MT_file_export.remove(export_model.menu_func_export)
+    bpy.types.TOPBAR_MT_file_export.remove(export_jms_model.menu_func_export)
 
     del bpy.types.Scene.blam
     del bpy.types.Object.blam
