@@ -32,18 +32,15 @@ from bpy.props import (
 from bpy.types import Operator
 from .utils import (
     get_root_collection,
+    get_instancer_collection,
     mesh_triangulate
     )
 
-JMS_CONSTANT = 8200
-NODE_LIST_CHECKSUM = 3251
-DEFAULT_TEXTURE_PATH = "<none>"
-
 # ------------------------------------------------------------
 # Menu's and panels:
-class Blam_ExportJmsModel(Operator, ExportHelper):
-    bl_idname = "blam.export_jms_model"  # important since its how bpy.ops.import_test.some_data is constructed
-    bl_label = "Export Halo model file"
+class Blam_ExportAssModel(Operator, ExportHelper):
+    bl_idname = "blam.export_ass_model"  # important since its how bpy.ops.import_test.some_data is constructed
+    bl_label = "Export Halo 2 model file"
     bl_options = {'PRESET'}
 
     filename_ext = ".jms"
@@ -67,7 +64,7 @@ class Blam_ExportJmsModel(Operator, ExportHelper):
         )
 
     def execute(self, context):
-        return write_jms_model(
+        return write_ass_model(
             context,
             self.filepath,
             self.use_triangles,
@@ -75,42 +72,33 @@ class Blam_ExportJmsModel(Operator, ExportHelper):
             )
 
 def menu_func_export(self, context):
-    self.layout.operator(Blam_ExportJmsModel.bl_idname, text='Halo Model (.jms)')
+    self.layout.operator(Blam_ExportAssModel.bl_idname, text='Halo 2 Model (.ass)')
 
-def write_jms_model(context, filepath,
+def write_ass_model(context, filepath,
                     EXPORT_TRI=True,
                     EXPORT_APPLY_MODIFIERS=True):
     root_collection = get_root_collection()
+    #instancer_collection = get_instancer_collection()
 
     # Get all objects and instanced objects
     # Halo CE does not use instanced geometry
     objects = root_collection.all_objects
     materials = []
-    regions = []
-    vertices = []
-    triangles = []
+    object_data = []
+    object_instances = []
 
     material_count = 0
-    region_count = 0
-    vertex_count = 0
-    tri_count = 0
-    for obj in objects:
-        # Region
-        if len(obj.data.name) >= 32:
-            print('Warning: Object \"' + obj.data.name + '\" name is too long and has been truncated')
-        regions.append(obj.data.name[:31])
+    object_count = 0
 
-        # Materials
-        flags = get_object_shader_flags(obj)
+    for obj in objects:
         material_indexs = []
         for mat in obj.material_slots:
-            matname = get_truncated_mat_name(mat.name, flags)
-            if matname not in materials:
-                materials.append(matname)
+            if mat.name not in materials:
+                materials.append(mat.name)
                 material_indexs.append(material_count)
                 material_count += 1
             else:
-                material_indexs.append(materials.index(matname))
+                material_indexs.append(materials.index(mat.name))
 
         # Mesh changes
         ## Apply modifiers
@@ -120,6 +108,11 @@ def write_jms_model(context, filepath,
         if EXPORT_TRI:
             # _must_ do this first since it re-allocs arrays
             mesh_triangulate(mesh)
+        
+        vertex_count = 0
+        tri_count = 0
+        vertices = []
+        triangles = []
 
         # Loop triangles
         for poly in mesh.polygons:
@@ -133,7 +126,7 @@ def write_jms_model(context, filepath,
                     '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # vertex normal (is the face normal???)
                         mesh.vertices[mesh.loops[i].vertex_index].normal
                         ) +
-                    '0\n' + # npde 1 index
+                    '0\n' + # node 1 index
                     '1\n' + # node 1 weight
                     '{0[0]:0.6f}\t{0[1]:0.6f}\n'.format( # uv coordinates
                         mesh.uv_layers.active.data[i].uv
@@ -143,69 +136,42 @@ def write_jms_model(context, filepath,
 
             # Triangles
             triangles.append(
-                str(region_count) + '\n' + # region index
                 str(material_indexs[poly.material_index]) + '\n' + # material index
-                str(vertex_count) + '\t' + 
-                str(vertex_count + 1) + '\t' +
-                str(vertex_count + 2) + '\n'
+                str(i) + '\n' # object vertex set index
                 )
             vertex_count += 3
             tri_count += 1
+        
+        object_data.append(
+            str(vertex_count) + '\n' +
+            (vertex for vertex in vertices) +
+            str(tri_count) + '\n' +
+            (tri for tri in triangles)
+            )
 
-        region_count += 1
+        object_instances.append(
+            '\n' + # object index after frame?
+            '\"' + obj.name + '\"\n' + # object name
+            '\n' + # object index after frame again ?
+            '0\n' +
+            '0\n' +
+            '0.0\t0.0\t0.0\t1.0\n' +
+            '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # object position
+                obj.location
+                ) +
+            '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # object scale
+                obj.scale
+                ) +
+            '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\t{0[3]:0.6f}\n'.format( # object rotation
+                obj.rotation_euler.to_quaternion()
+                ) +
+            '0.0\t0.0\t0.0\n' +
+            '1.0\n'
+            )
+
+        object_count += 1
 
     # Start write
-    file = open(filepath, 'w',)
-
-    # Header and nodes
-    file.write(
-        str(JMS_CONSTANT) + '\n' +
-        str(NODE_LIST_CHECKSUM) + '\n'
-        )
-
-    # Nodes
-    node_count = 1
-    file.write(str(node_count) + '\n')
-
-    ## Frame
-    file.write(
-        'frame\n' +
-        '-1\n' +
-        '-1\n' +
-        '0.0\t0.0\t0.0\t1.0\n' +
-        '0.0\t0.0\t0.0\n'
-        )
-    
-    # Materials
-    file.write(str(material_count) + '\n')
-    for mat in materials:
-        file.write(
-            mat + '\n' +
-            DEFAULT_TEXTURE_PATH + '\n'
-            )
-        
-    # Marker
-    marker_count = 0
-    file.write(str(marker_count) + '\n')
-    
-    # Regions
-    file.write(str(region_count) + '\n')
-    for region_name in regions:
-        file.write(region_name + '\n')
-        
-    # Vertices
-    file.write(str(vertex_count) + '\n')
-    for vertex in vertices:
-        file.write(vertex)
-    
-    # Triangles
-    file.write(str(tri_count) + '\n')
-    for tri in triangles:
-        file.write(tri)
-    
-    file.close()
-
-    return {'FINISHED'}
 
 def get_object_shader_flags(obj):
     blam = obj.blam
@@ -235,12 +201,3 @@ def get_object_shader_flags(obj):
             flag_string += '.'
 
         return flag_string
-
-def get_truncated_mat_name(matname, flags):
-    combined_name = matname + flags
-    if len(combined_name) >= 32:
-        truncated_name = matname[:31 - len(flags)] + flags
-        print('Warning: Material \"' + combined_name + '\" it has been truncated too \"' + truncated_name + '\"')
-        return truncated_name
-    else:
-        return combined_name
