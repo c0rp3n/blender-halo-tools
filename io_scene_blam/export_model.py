@@ -69,7 +69,7 @@ class Blam_ExportModel(Operator, ExportHelper):
     use_triangles: BoolProperty(
         name="Triangulate Faces",
         description="Convert all faces to triangles",
-        default=False,
+        default=True,
         )
 
     def execute(self, context):
