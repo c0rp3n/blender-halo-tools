@@ -14,10 +14,10 @@ Halo CE exporter comparison
 | Models              | [-]                | [-]        | [-]        | [-]   |
 | Texture Coordinates | [-]                | [-]        | [-]        | [-]   |
 | Vertex Normals      | [-]                | [-]        | [-]        | [-]   |
-| Nodes               | [ ]                | [-]        | [-]        | [-]   |
-| Biped Systems       | [ ]                | [-]        | [-]        | [-]   |
-| Multiple Regions    | [-]                | [ ]        | [-]        | [-]   |
-| Vertex Weights      | [ ]                | [-]        | [ ]        | [-]   |
+| Nodes               | [ ]                | [-]        | [-]        | [ ]   |
+| Biped Systems       | [ ]                | [-]        | [-]        | [ ]   |
+| Multiple Regions    | [-]                | [ ]        | [-]        | [ ]   |
+| Vertex Weights      | [ ]                | [-]        | [ ]        | [ ]   |
 
 #### Usage
 Model layout:
