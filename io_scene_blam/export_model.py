@@ -127,8 +127,6 @@ def write_jms_model(context, filepath,
             # _must_ do this first since it re-allocs arrays
             mesh_triangulate(mesh)
 
-        smoothing_groups, group_count = mesh.calc_smooth_groups()
-
         # Loop triangles
         for poly in mesh.polygons:
             # Vertices
@@ -139,14 +137,14 @@ def write_jms_model(context, filepath,
                         mesh.vertices[mesh.loops[i].vertex_index].co
                         ) +
                     '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # vertex normal (is the face normal???)
-                        poly.normal
+                        mesh.vertices[mesh.loops[i].vertex_index].normal
                         ) +
                     '0\n' + # npde 1 index
                     '1\n' + # node 1 weight
                     '{0[0]:0.6f}\t{0[1]:0.6f}\n'.format( # uv coordinates
                         mesh.uv_layers.active.data[i].uv
                         ) +
-                    str(smoothing_groups[poly.index]) + '\n' # smoothing group
+                    str(0) + '\n' # unknown
                     )
 
             # Triangles
