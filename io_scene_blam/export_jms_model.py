@@ -84,7 +84,14 @@ def write_jms_model(context, filepath,
 
     # Get all objects and instanced objects
     # Halo CE does not use instanced geometry
-    objects = root_collection.all_objects
+    objects = []
+    rigged_objects = []
+    for obj in root_collection.all_objects:
+        if obj.data.type == 'MESH':
+            objects.append(obj)
+        elif obj.data.type == 'ARMATURE':
+            rigged_objects.append(obj)
+
     materials = []
     regions = []
     vertices = []
