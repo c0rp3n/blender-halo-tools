@@ -96,9 +96,9 @@ def write_jms_model(context, filepath,
     tri_count = 0
     for obj in objects:
         # Region
-        if len(obj.data.name) >= 32:
-            print('Warning: Object \"' + obj.data.name + '\" name is too long and has been truncated')
-        regions.append(obj.data.name[:31])
+        if len(obj.name) >= 31:
+            print('Warning: Object \"' + obj.name + '\" name is too long and has been truncated')
+        regions.append(obj.name[:31])
 
         # Materials
         flags = get_object_shader_flags(obj)
@@ -238,7 +238,7 @@ def get_object_shader_flags(obj):
 
 def get_truncated_mat_name(matname, flags):
     combined_name = matname + flags
-    if len(combined_name) >= 32:
+    if len(combined_name) >= 31:
         truncated_name = matname[:31 - len(flags)] + flags
         print('Warning: Material \"' + combined_name + '\" it has been truncated too \"' + truncated_name + '\"')
         return truncated_name
