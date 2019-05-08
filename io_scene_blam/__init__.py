@@ -24,7 +24,7 @@ bl_info = {
     "name": "Blender Halo Tools",
     "description": "Exporter for Halo CE (JMS) and Halo 2 (ASS) files.",
     "author": "Oliver \"c0rp3n\" Hitchcock",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (2, 80, 0),
     "category": "Import-Export",
     "location": "File > Import/Export, Scene properties",
