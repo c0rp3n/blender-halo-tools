@@ -92,15 +92,74 @@ def write_jms_model(context, filepath,
         elif obj.data.type == 'ARMATURE':
             rigged_objects.append(obj)
 
+    nodes = []
     materials = []
     regions = []
     vertices = []
     triangles = []
 
+    node_count = 1
     material_count = 0
     region_count = 0
     vertex_count = 0
     tri_count = 0
+
+    # Add the frame
+    nodes.append(
+        'frame\n' +
+        '-1\n' +
+        '-1\n' +
+        '0.0\t0.0\t0.0\t1.0\n' +
+        '0.0\t0.0\t0.0\n'
+        )
+
+    # Nodes
+    bones = []
+    for obj in rigged_objects:
+        armature = obj.data
+
+        for bone in armature.bones:
+            bones.append(bone)
+
+        for child in obj.children:
+            objects.append(child)
+
+    ## Sort bones alphabetically
+    bone_map = { bones[i].name: i for i in range(len(bones)) }
+    bones[:] = list(bones[bone_map[name]] for name in sorted(bone_map))
+    ## Rehash the indexs
+    bone_map[:] = { bones[i].name: i for i in range(len(bones)) }
+
+    ## Loop the sorted bones
+    for bone in bones:
+        child_index = -1
+        sibling_index = -1
+        if len(bone.children): # find the first child if this bone has any
+            child_index = bone_map[bone.children[0].name]
+
+        found = False # have we found the current node in the parent yet
+        for child in bone.parent.children:
+            if found: # if yes this is the next child of the parent
+                child_index = bone_map[child.name]
+                break
+            elif child.name == bone.name:
+                found = True
+
+        if len(bone.name) >= 31:
+            print('Warning: Armature \"' + bone.name + '\" name is too long and has been truncated')
+        nodes.append(
+            bone.name[:31] + '\n' + # node name
+            str(child_index) + '\n' + # first child index
+            str(sibling_index) + '\n' + # sibling index
+            '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\t{0[3]:0.6f}\n'.format( # i j k w rotation
+                bone.vector.to_quaternion()
+                ) + '\n' +
+            '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # x y z position
+                bone.head
+                ) + '\n'
+            )
+        node_count += 1
+
     for obj in objects:
         # Region
         if len(obj.name) >= 31:
@@ -132,16 +191,28 @@ def write_jms_model(context, filepath,
         for poly in mesh.polygons:
             # Vertices
             for i in poly.loop_indices:
+                v = mesh.vertices[mesh.loops[i].vertex_index]
+
+                ## Get vertex information
+                parent_node = 0
+                vertex_group = -1
+                vertex_weight = 1.0
+                if len(mesh.vertices[mesh.loops[i].vertex_index].groups) > 1: # each node can only have one influencer bar the root
+                    bone_index = bone_map[v.groups[0].name]
+                    parent_node = bone_map[bones[bone_index].parent.name] # @todo safety check here?
+                    vertex_group = bone_index
+                    vertex_weight = v.groups[0].weight
+
                 vertices.append(
-                    '0\n' +
-                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format(
-                        mesh.vertices[mesh.loops[i].vertex_index].co
+                    str(parent_node) + '\n' + # parent node
+                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # vertex location
+                        v.co
                         ) +
-                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # vertex normal (is the face normal???)
-                        mesh.vertices[mesh.loops[i].vertex_index].normal
+                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # vertex normal (pre smoothed by blender if using smooth shading)
+                        v.normal
                         ) +
-                    '0\n' + # npde 1 index
-                    '1\n' + # node 1 weight
+                    str(vertex_group) + '\n' + # node 1 index
+                    str(vertex_weight) + '\n' + # node 1 weight
                     '{0[0]:0.6f}\t{0[1]:0.6f}\n'.format( # uv coordinates
                         mesh.uv_layers.active.data[i].uv
                         ) +
@@ -164,24 +235,16 @@ def write_jms_model(context, filepath,
     # Start write
     file = open(filepath, 'w',)
 
-    # Header and nodes
+    # Header
     file.write(
         str(JMS_CONSTANT) + '\n' +
         str(NODE_LIST_CHECKSUM) + '\n'
         )
 
     # Nodes
-    node_count = 1
     file.write(str(node_count) + '\n')
-
-    ## Frame
-    file.write(
-        'frame\n' +
-        '-1\n' +
-        '-1\n' +
-        '0.0\t0.0\t0.0\t1.0\n' +
-        '0.0\t0.0\t0.0\n'
-        )
+    for node in nodes:
+        file.write(node)
     
     # Materials
     file.write(str(material_count) + '\n')
