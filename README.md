@@ -11,13 +11,13 @@ Halo CE exporter comparison
 
 |                     | Blender Halo Tools | BlueStreak | Blitzkrieg | Chimp |
 |---------------------|--------------------|------------|------------|-------|
-| Models              | [-]                | [-]        | [-]        | [-]   |
-| Texture Coordinates | [-]                | [-]        | [-]        | [-]   |
-| Vertex Normals      | [-]                | [-]        | [-]        | [-]   |
-| Nodes               | [ ]                | [-]        | [-]        | [ ]   |
-| Biped Systems       | [ ]                | [-]        | [-]        | [ ]   |
-| Multiple Regions    | [-]                | [ ]        | [-]        | [ ]   |
-| Vertex Weights      | [ ]                | [-]        | [ ]        | [ ]   |
+| Models              |  ✓                 |  ✓         |  ✓         |  ✓    |
+| Texture Coordinates |  ✓                 |  ✓         |  ✓         |  ✓    |
+| Vertex Normals      |  ✓                 |  ✓         |  ✓         |  ✓    |
+| Nodes               |  ✗                 |  ✓         |  ✓         |  ✗    |
+| Biped Systems       |  ✗                 |  ✓         |  ✓         |  ✗    |
+| Multiple Regions    |  ✓                 |  ✗         |  ✓         |  ✗    |
+| Vertex Weights      |  ✗                 |  ✓         |  ✓         |  ✗    |
 
 #### Usage
 Model layout:
