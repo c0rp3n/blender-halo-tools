@@ -139,10 +139,10 @@ def write_jms_model(context, filepath,
 
         found = False # have we found the current node in the parent yet
         for child in bone.parent.children:
-            if found: # if yes this is the next child of the parent
-                child_index = bone_map[child.name]
+            if found: # if yes then this is the next child of the parent
+                sibling_index = bone_map[child.name]
                 break
-            elif child.name == bone.name:
+            elif child == bone:
                 found = True
 
         if len(bone.name) >= 31:
@@ -197,7 +197,7 @@ def write_jms_model(context, filepath,
                 parent_node = 0
                 vertex_group = -1
                 vertex_weight = 1.0
-                if len(mesh.vertices[mesh.loops[i].vertex_index].groups) > 1: # each node can only have one influencer bar the root
+                if len(v.groups) > 1: # each node can only have one influencer bar the root
                     bone_index = bone_map[v.groups[0].name]
                     parent_node = bone_map[bones[bone_index].parent.name] # @todo safety check here?
                     vertex_group = bone_index
