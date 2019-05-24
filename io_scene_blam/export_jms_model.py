@@ -44,13 +44,13 @@ DEFAULT_TEXTURE_PATH = "<none>"
 class Blam_ExportJmsModel(Operator, ExportHelper):
     bl_idname = "blam.export_jms_model"  # important since its how bpy.ops.import_test.some_data is constructed
     bl_label = "Export Halo model file"
-    bl_options = {'PRESET'}
+    bl_options = {"PRESET"}
 
     filename_ext = ".jms"
 
     filter_glob: StringProperty(
         default="*.jms",
-        options={'HIDDEN'},
+        options={"HIDDEN"},
         maxlen=255,  # Max internal buffer length, longer would be clamped.
         )
     
@@ -75,7 +75,7 @@ class Blam_ExportJmsModel(Operator, ExportHelper):
             )
 
 def menu_func_export(self, context):
-    self.layout.operator(Blam_ExportJmsModel.bl_idname, text='Halo Model (.jms)')
+    self.layout.operator(Blam_ExportJmsModel.bl_idname, text="Halo Model (.jms)")
 
 def write_jms_model(context, filepath,
                     EXPORT_TRI=True,
@@ -87,9 +87,9 @@ def write_jms_model(context, filepath,
     objects = []
     rigged_objects = []
     for obj in root_collection.all_objects:
-        if obj.data.type == 'MESH':
+        if obj.data.type == "MESH":
             objects.append(obj)
-        elif obj.data.type == 'ARMATURE':
+        elif obj.data.type == "ARMATURE":
             rigged_objects.append(obj)
 
     nodes = []
@@ -106,11 +106,11 @@ def write_jms_model(context, filepath,
 
     # Add the frame
     nodes.append(
-        'frame\n' +
-        '-1\n' +
-        '-1\n' +
-        '0.0\t0.0\t0.0\t1.0\n' +
-        '0.0\t0.0\t0.0\n'
+        "frame\n" +
+        "-1\n" +
+        "-1\n" +
+        "0.0\t0.0\t0.0\t1.0\n" +
+        "0.0\t0.0\t0.0\n"
         )
 
     # Nodes
@@ -146,24 +146,24 @@ def write_jms_model(context, filepath,
                 found = True
 
         if len(bone.name) >= 31:
-            print('Warning: Armature \"' + bone.name + '\" name is too long and has been truncated')
+            print("Warning: Armature \"" + bone.name + "\" name is too long and has been truncated")
         nodes.append(
-            bone.name[:31] + '\n' + # node name
-            str(child_index) + '\n' + # first child index
-            str(sibling_index) + '\n' + # sibling index
-            '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\t{0[3]:0.6f}\n'.format( # i j k w rotation
+            bone.name[:31] + "\n" + # node name
+            str(child_index) + "\n" + # first child index
+            str(sibling_index) + "\n" + # sibling index
+            "{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\t{0[3]:0.6f}\n".format( # i j k w rotation
                 bone.vector.to_quaternion()
-                ) + '\n' +
-            '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # x y z position
+                ) + "\n" +
+            "{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n".format( # x y z position
                 bone.head
-                ) + '\n'
+                ) + "\n"
             )
         node_count += 1
 
     for obj in objects:
         # Region
         if len(obj.name) >= 31:
-            print('Warning: Object \"' + obj.name + '\" name is too long and has been truncated')
+            print("Warning: Object \"" + obj.name + "\" name is too long and has been truncated")
         regions.append(obj.name[:31])
 
         # Materials
@@ -204,28 +204,28 @@ def write_jms_model(context, filepath,
                     vertex_weight = v.groups[0].weight
 
                 vertices.append(
-                    str(parent_node) + '\n' + # parent node
-                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # vertex location
+                    str(parent_node) + "\n" + # parent node
+                    "{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n".format( # vertex location
                         v.co
                         ) +
-                    '{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n'.format( # vertex normal (pre smoothed by blender if using smooth shading)
+                    "{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n".format( # vertex normal (pre smoothed by blender if using smooth shading)
                         v.normal
                         ) +
-                    str(vertex_group) + '\n' + # node 1 index
-                    str(vertex_weight) + '\n' + # node 1 weight
-                    '{0[0]:0.6f}\t{0[1]:0.6f}\n'.format( # uv coordinates
+                    str(vertex_group) + "\n" + # node 1 index
+                    str(vertex_weight) + "\n" + # node 1 weight
+                    "{0[0]:0.6f}\t{0[1]:0.6f}\n".format( # uv coordinates
                         mesh.uv_layers.active.data[i].uv
                         ) +
-                    str(0) + '\n' # unknown
+                    str(0) + "\n" # unknown
                     )
 
             # Triangles
             triangles.append(
-                str(region_count) + '\n' + # region index
-                str(material_indexs[poly.material_index]) + '\n' + # material index
-                str(vertex_count) + '\t' + 
-                str(vertex_count + 1) + '\t' +
-                str(vertex_count + 2) + '\n'
+                str(region_count) + "\n" + # region index
+                str(material_indexs[poly.material_index]) + "\n" + # material index
+                str(vertex_count) + "\t" + 
+                str(vertex_count + 1) + "\t" +
+                str(vertex_count + 2) + "\n"
                 )
             vertex_count += 3
             tri_count += 1
@@ -233,49 +233,49 @@ def write_jms_model(context, filepath,
         region_count += 1
 
     # Start write
-    file = open(filepath, 'w',)
+    file = open(filepath, "w",)
 
     # Header
     file.write(
-        str(JMS_CONSTANT) + '\n' +
-        str(NODE_LIST_CHECKSUM) + '\n'
+        str(JMS_CONSTANT) + "\n" +
+        str(NODE_LIST_CHECKSUM) + "\n"
         )
 
     # Nodes
-    file.write(str(node_count) + '\n')
+    file.write(str(node_count) + "\n")
     for node in nodes:
         file.write(node)
     
     # Materials
-    file.write(str(material_count) + '\n')
+    file.write(str(material_count) + "\n")
     for mat in materials:
         file.write(
-            mat + '\n' +
-            DEFAULT_TEXTURE_PATH + '\n'
+            mat + "\n" +
+            DEFAULT_TEXTURE_PATH + "\n"
             )
         
     # Marker
     marker_count = 0
-    file.write(str(marker_count) + '\n')
+    file.write(str(marker_count) + "\n")
     
     # Regions
-    file.write(str(region_count) + '\n')
+    file.write(str(region_count) + "\n")
     for region_name in regions:
-        file.write(region_name + '\n')
+        file.write(region_name + "\n")
         
     # Vertices
-    file.write(str(vertex_count) + '\n')
+    file.write(str(vertex_count) + "\n")
     for vertex in vertices:
         file.write(vertex)
     
     # Triangles
-    file.write(str(tri_count) + '\n')
+    file.write(str(tri_count) + "\n")
     for tri in triangles:
         file.write(tri)
     
     file.close()
 
-    return {'FINISHED'}
+    return {"FINISHED"}
 
 def get_object_shader_flags(obj):
     blam = obj.blam
@@ -284,25 +284,25 @@ def get_object_shader_flags(obj):
     else:
         flag_string = ""
         if blam.double_sided:
-            flag_string += '%'
+            flag_string += "%"
         if blam.allow_transparency:
-            flag_string += '#'
+            flag_string += "#"
         if blam.render_only:
-            flag_string += '!'
+            flag_string += "!"
         if blam.large_collideable:
-            flag_string += '*'
+            flag_string += "*"
         if blam.fog_plane:
-            flag_string += '$'
+            flag_string += "$"
         if blam.ladder:
-            flag_string += '^'
+            flag_string += "^"
         if blam.breakable:
-            flag_string += '-'
+            flag_string += "-"
         if blam.ai_defeaning:
-            flag_string += '&'
+            flag_string += "&"
         if blam.collision_only:
-            flag_string += '@'
+            flag_string += "@"
         if blam.exact_portal:
-            flag_string += '.'
+            flag_string += "."
 
         return flag_string
 
@@ -310,7 +310,7 @@ def get_truncated_mat_name(matname, flags):
     combined_name = matname + flags
     if len(combined_name) >= 31:
         truncated_name = matname[:31 - len(flags)] + flags
-        print('Warning: Material \"' + combined_name + '\" it has been truncated too \"' + truncated_name + '\"')
+        print("Warning: Material \"" + combined_name + "\" it has been truncated too \"" + truncated_name + "\"")
         return truncated_name
     else:
         return combined_name

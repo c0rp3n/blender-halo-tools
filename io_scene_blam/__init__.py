@@ -57,8 +57,8 @@ from io_scene_blam import export_jms_model
 class Blam_SceneProps(Panel):
     bl_label = "Blam Properties"
     bl_idname = "blam_scene_panel"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
     bl_context = "scene"
 
     def draw(self, context):
@@ -76,15 +76,15 @@ class Blam_SceneProps(Panel):
 class Blam_ObjectProps(Panel):
     bl_label = "Blam Properties"
     bl_idname = "blam_object_panel"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
     bl_context = "object"
-    bl_options = {'DEFAULT_CLOSED'}
+    bl_options = {"DEFAULT_CLOSED"}
 
     show_shader_flags: BoolProperty(
-        name="Shader Flags",
-        default=True,
-        description="Show shader flags."
+        name = "Shader Flags",
+        default = True,
+        description = "Show shader flags."
         )
 
     def draw(self, context):
@@ -133,13 +133,13 @@ class Blam_ObjectProps(Panel):
 # Properties groups:
 class Blam_ScenePropertiesGroup(PropertyGroup):
     root_collection : StringProperty(
-        name = 'Root',
+        name = "Root",
         default = "Frame",
         description = "The root collection for export"
         )
     
     instance_collection : StringProperty(
-        name = 'Instances',
+        name = "Instances",
         default = "Assets",
         description = "The instancer collection for export"
         )
