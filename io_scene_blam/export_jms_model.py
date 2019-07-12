@@ -87,9 +87,9 @@ def write_jms_model(context, filepath,
     objects = []
     rigged_objects = []
     for obj in root_collection.all_objects:
-        if obj.data.type == "MESH":
+        if obj.type == "MESH":
             objects.append(obj)
-        elif obj.data.type == "ARMATURE":
+        elif obj.type == "ARMATURE":
             rigged_objects.append(obj)
 
     nodes = []
