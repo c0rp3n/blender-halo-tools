@@ -87,9 +87,9 @@ def write_jms_model(context, filepath,
     objects = []
     rigged_objects = []
     for obj in root_collection.all_objects:
-        if obj.type == "MESH":
+        if obj.type == 'MESH':
             objects.append(obj)
-        elif obj.type == "ARMATURE":
+        elif obj.type == 'ARMATURE':
             rigged_objects.append(obj)
 
     nodes = []
@@ -114,52 +114,54 @@ def write_jms_model(context, filepath,
         )
 
     # Nodes
-    bones = []
-    for obj in rigged_objects:
-        armature = obj.data
+    if len(rigged_objects) > 0:
+        bones = []
+        for obj in rigged_objects:
+            armature = obj.data
 
-        for bone in armature.bones:
-            bones.append(bone)
+            for bone in armature.bones:
+                bones.append(bone)
 
-        for child in obj.children:
-            objects.append(child)
+            for child in obj.children:
+                objects.append(child)
+        
+        ## Sort bones alphabetically
+        bone_map = { bones[i].name: i for i in range(len(bones)) }
+        bones[:] = list(bones[bone_map[name]] for name in sorted(bone_map))
+        ## Rehash the indexs
+        bone_map[:] = { bones[i].name: i for i in range(len(bones)) }
 
-    ## Sort bones alphabetically
-    bone_map = { bones[i].name: i for i in range(len(bones)) }
-    bones[:] = list(bones[bone_map[name]] for name in sorted(bone_map))
-    ## Rehash the indexs
-    bone_map[:] = { bones[i].name: i for i in range(len(bones)) }
+        ## Loop the sorted bones
+        for bone in bones:
+            child_index = -1
+            sibling_index = -1
+            if len(bone.children): # find the first child if this bone has any
+                child_index = bone_map[bone.children[0].name]
 
-    ## Loop the sorted bones
-    for bone in bones:
-        child_index = -1
-        sibling_index = -1
-        if len(bone.children): # find the first child if this bone has any
-            child_index = bone_map[bone.children[0].name]
+            found = False # have we found the current node in the parent yet
+            for child in bone.parent.children:
+                if found: # if yes then this is the next child of the parent
+                    sibling_index = bone_map[child.name]
+                    break
+                elif child == bone:
+                    found = True
 
-        found = False # have we found the current node in the parent yet
-        for child in bone.parent.children:
-            if found: # if yes then this is the next child of the parent
-                sibling_index = bone_map[child.name]
-                break
-            elif child == bone:
-                found = True
+            if len(bone.name) >= 31:
+                print("Warning: Armature \"" + bone.name + "\" name is too long and has been truncated")
+            nodes.append(
+                bone.name[:31] + "\n" + # node name
+                str(child_index) + "\n" + # first child index
+                str(sibling_index) + "\n" + # sibling index
+                "{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\t{0[3]:0.6f}\n".format( # i j k w rotation
+                    bone.vector.to_quaternion()
+                    ) + "\n" +
+                "{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n".format( # x y z position
+                    bone.head
+                    ) + "\n"
+                )
+            node_count += 1
 
-        if len(bone.name) >= 31:
-            print("Warning: Armature \"" + bone.name + "\" name is too long and has been truncated")
-        nodes.append(
-            bone.name[:31] + "\n" + # node name
-            str(child_index) + "\n" + # first child index
-            str(sibling_index) + "\n" + # sibling index
-            "{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\t{0[3]:0.6f}\n".format( # i j k w rotation
-                bone.vector.to_quaternion()
-                ) + "\n" +
-            "{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n".format( # x y z position
-                bone.head
-                ) + "\n"
-            )
-        node_count += 1
-
+    depsgraph = context.evaluated_depsgraph_get()
     for obj in objects:
         # Region
         if len(obj.name) >= 31:
@@ -180,7 +182,14 @@ def write_jms_model(context, filepath,
 
         # Mesh changes
         ## Apply modifiers
-        mesh = obj.to_mesh(context.depsgraph, EXPORT_APPLY_MODIFIERS)
+        obj_for_convert = obj.evaluated_get(depsgraph) if EXPORT_APPLY_MODIFIERS else obj.original
+        try:
+            mesh = obj_for_convert.to_mesh()
+        except RuntimeError:
+            mesh = None
+
+        if mesh is None:
+            continue
 
         ## Triangulate
         if EXPORT_TRI:
@@ -216,7 +225,7 @@ def write_jms_model(context, filepath,
                     "{0[0]:0.6f}\t{0[1]:0.6f}\n".format( # uv coordinates
                         mesh.uv_layers.active.data[i].uv
                         ) +
-                    str(0) + "\n" # unknown
+                    "0\n" # unknown
                     )
 
             # Triangles
