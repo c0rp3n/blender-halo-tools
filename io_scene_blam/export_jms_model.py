@@ -171,6 +171,7 @@ def write_jms_model(context, filepath,
         # Materials
         flags = get_object_shader_flags(obj)
         material_indexs = []
+        
         for mat in obj.material_slots:
             matname = get_truncated_mat_name(mat.name, flags)
             if matname not in materials:
@@ -179,6 +180,9 @@ def write_jms_model(context, filepath,
                 material_count += 1
             else:
                 material_indexs.append(materials.index(matname))
+
+        if not material_indexs:
+            print("Error: Object \"" + obj.name + "\" has no materials assigned to it.")
 
         # Mesh changes
         ## Apply modifiers
@@ -212,6 +216,11 @@ def write_jms_model(context, filepath,
                     vertex_group = bone_index
                     vertex_weight = v.groups[0].weight
 
+                try:
+                    uv = mesh.uv_layers.active.data[i].uv
+                except RuntimeError:
+                    uv = v.co[:2]
+
                 vertices.append(
                     str(parent_node) + "\n" + # parent node
                     "{0[0]:0.6f}\t{0[1]:0.6f}\t{0[2]:0.6f}\n".format( # vertex location
@@ -223,7 +232,7 @@ def write_jms_model(context, filepath,
                     str(vertex_group) + "\n" + # node 1 index
                     str(vertex_weight) + "\n" + # node 1 weight
                     "{0[0]:0.6f}\t{0[1]:0.6f}\n".format( # uv coordinates
-                        mesh.uv_layers.active.data[i].uv
+                        uv
                         ) +
                     "0\n" # unknown
                     )
