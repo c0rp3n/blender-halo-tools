@@ -1,8 +1,8 @@
 # Blender Halo Tools
 
-A project that aims to provide comprehenisve blam engine support too blender.
+A project that aimed to provide comprehenisve blam engine support too blender.
 
-_This project is not yet feature complete or stable so current features and or the usage of tihs addon may change, thus is it not recommended for general use as of yet until a stable version is released._
+This project and all of its functionality is now superceeded by [Halo-Asset-Blender-Development-Toolset](https://github.com/General-101/Halo-Asset-Blender-Development-Toolset), please use that rather than these tools.
 
 ## Features
 
